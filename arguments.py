@@ -70,6 +70,20 @@ def parse_training_config() -> TrainingConfig:
         help="关闭 SwanLab 实验日志",
     )
 
+    parser.add_argument(
+        "--patience",
+        type=int,
+        default=None,
+        help="早停等待轮数，设为0表示关闭",
+    )
+
+    parser.add_argument(
+        "--min-delta",
+        type=float,
+        default=None,
+        help="Macrof1被视为提升所需的最小变化",
+    )
+
     args = parser.parse_args()
 
     params = TrainingConfig()
@@ -103,6 +117,12 @@ def parse_training_config() -> TrainingConfig:
 
     if args.disable_swanlab:
         overrides["swanlab_enabled"] = False
+
+    if args.patience is not None:
+        overrides["early_stopping_patience"] = args.patience
+
+    if args.min_delta is not None:
+        overrides["early_stopping_min_delta"] = args.min_delta
 
     params = replace(params, **overrides)
 

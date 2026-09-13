@@ -129,6 +129,7 @@ def train(params: TrainingConfig):
     start_epoch = 1
     global_step = 0
     best_dev_macro_f1 = -1.0
+    epochs_without_improvement = 0
 
     if params.resume_training:
         resume_info = load_checkpoint(
@@ -143,6 +144,11 @@ def train(params: TrainingConfig):
         start_epoch = resume_info["start_epoch"]
         global_step = resume_info["global_step"]
         best_dev_macro_f1 = resume_info["best_dev_macro_f1"]
+
+        epochs_without_improvement = resume_info.get(
+        "early_stopping_counter",
+        0,
+        )
 
         print( f"从第 {start_epoch} 个 epoch 继续训练")
 
@@ -236,10 +242,15 @@ def train(params: TrainingConfig):
                 step=global_step,
             )
 
-        is_best = (dev_result["macro_f1"]> best_dev_macro_f1)
+        #最佳模型判断
+        current_macro_f1 = dev_result["macro_f1"]
+        is_best = (current_macro_f1> best_dev_macro_f1 + params.early_stopping_min_delta)
 
         if is_best:
-            best_dev_macro_f1 = (dev_result["macro_f1"])
+            best_dev_macro_f1 = current_macro_f1
+            epochs_without_improvement =0
+        else:
+            epochs_without_improvement +=1
 
         checkpoint_metrics = {
             key: value
@@ -257,6 +268,7 @@ def train(params: TrainingConfig):
             best_dev_macro_f1=(best_dev_macro_f1),
             train_config=params.to_dict(),
             dev_metrics=checkpoint_metrics,
+            early_stopping_counter=epochs_without_improvement,
         )
 
         print("已保存最近训练状态：",last_checkpoint_path)
@@ -272,9 +284,15 @@ def train(params: TrainingConfig):
                 best_dev_macro_f1=(best_dev_macro_f1),
                 train_config=params.to_dict(),
                 dev_metrics=checkpoint_metrics,
+                early_stopping_counter=epochs_without_improvement,
             )
 
             print("已保存最佳模型："f"dev Macro-F1="f"{best_dev_macro_f1:.4f}")
+        if params.early_stopping_patience >0:
+            print(f"早停计数：{epochs_without_improvement}/{params.early_stopping_patience}")
+            if(epochs_without_improvement>=params.early_stopping_patience):
+                print(f"验证集 Macro-F1 连续{params.early_stopping_patience}轮没有提升，提前结束训练")
+                break
     print()
     print("=" * 60)
     print("加载最佳模型并评价测试集")

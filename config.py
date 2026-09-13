@@ -100,6 +100,9 @@ class TrainingConfig:
     num_workers: int = 0
     log_interval: int = 20
 
+    early_stopping_patience: int = 4
+    early_stopping_min_delta: float = 1e-4
+
     device: str = "auto"
     resume_training: bool = False
 

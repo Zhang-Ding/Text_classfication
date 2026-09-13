@@ -66,6 +66,7 @@ def save_checkpoint(
     best_dev_macro_f1: float,
     train_config: dict,
     dev_metrics: dict,
+    early_stopping_counter: int,
 ) -> None:
     checkpoint = {
         "checkpoint_version": CHECKPOINT_VERSION,
@@ -83,6 +84,7 @@ def save_checkpoint(
         "dev_metrics": dict(dev_metrics),
         "model_metadata": get_model_metadata(model),
         "random_state": get_random_state(),
+        "early_stopping_counter": early_stopping_counter,
     }
 
     directory = os.path.dirname(
@@ -161,6 +163,10 @@ def load_checkpoint(
         ),
         "checkpoint_version": checkpoint.get(
             "checkpoint_version",
+            0,
+        ),
+        "early_stopping_counter": checkpoint.get(
+            "early_stopping_counter",
             0,
         ),
     }
