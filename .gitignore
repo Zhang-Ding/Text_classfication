@@ -1,0 +1,10 @@
+
+/bertmodel/bert-base-chinese/*
+!/bertmodel/bert-base-chinese/.gitkeep
+
+/bertmodel/bert-base-chinese/*
+!/bertmodel/bert-base-chinese/.gitkeep
+/checkpoints/*
+!/checkpoints/.gitkeep
+__pycache__/
+*.py[cod]
