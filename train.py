@@ -116,11 +116,15 @@ def train(params: TrainingConfig):
         num_training_steps=total_training_steps,
     )
 
-    best_checkpoint_path = os.path.join(params.save_dir,"best_model.pt")
+    #每组实验放进独立目录
+    experiment_dir = os.path.join(params.save_dir,params.swanlab_experiment_name)
+    os.makedirs(experiment_dir, exist_ok=True)
 
-    last_checkpoint_path = os.path.join(params.save_dir,"last_checkpoint.pt")
+    best_checkpoint_path = os.path.join(experiment_dir,"best_model.pt")
 
-    tokenizer.save_pretrained(os.path.join( params.save_dir, "tokenizer"))
+    last_checkpoint_path = os.path.join(experiment_dir,"last_checkpoint.pt")
+
+    tokenizer.save_pretrained(os.path.join(experiment_dir, "tokenizer"))
 
     start_epoch = 1
     global_step = 0
