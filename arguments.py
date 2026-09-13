@@ -84,6 +84,20 @@ def parse_training_config() -> TrainingConfig:
         help="Macrof1被视为提升所需的最小变化",
     )
 
+    parser.add_argument(
+        "--dropout",
+        type=float,
+        default=None,
+        help="分类层 Dropout 概率，范围为 [0, 1)",
+    )
+
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="随机种子",
+    )
+
     args = parser.parse_args()
 
     params = TrainingConfig()
@@ -123,6 +137,20 @@ def parse_training_config() -> TrainingConfig:
 
     if args.min_delta is not None:
         overrides["early_stopping_min_delta"] = args.min_delta
+    #dropout seed参数检查
+    if(args.dropout is not None and not 0<= args.dropout<1):
+        parser.error("--dropout必须在[0,1)范围内")
+
+    if args.seed is not None and args.seed <0:
+        parser.error("--seed不能小于0")
+
+    if args.dropout is not None:
+        overrides["dropout"] = args.dropout
+
+    if args.seed is not None:
+        overrides["seed"] = args.seed
+    
+    
 
     params = replace(params, **overrides)
 
@@ -130,7 +158,9 @@ def parse_training_config() -> TrainingConfig:
         generated_name = (
             f"bert-lr{params.learning_rate}-"
             f"batch{params.batch_size}-"
-            f"epoch{params.epochs}"
+            f"dropout{params.dropout}-"
+            f"epoch{params.epochs}-"
+            f"seed{params.seed}"
         )
 
         params = replace(
