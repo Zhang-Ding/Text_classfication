@@ -53,7 +53,8 @@ textclassfication/
 ├── model.py                 # BERT 分类模型
 ├── metrics.py               # 手写评价指标
 ├── checkpoint.py            # 模型保存与恢复
-├── train.py                 # 训练入口
+├── trainer.py               # 训练、验证、早停和测试流程
+├── train.py                 # 命令行训练入口
 ├── data/                    # 训练、验证和测试数据
 ├── bertmodel/               # 本地预训练模型
 ├── checkpoints/             # 模型检查点
@@ -69,13 +70,8 @@ textclassfication/
 pip install torch transformers swanlab
 ```
 
-将 **`bert-base-chinese`** 放到 `bertmodel/bert-base-chinese/`。首次使用 SwanLab 时执行：
+将 **`bert-base-chinese`** 放到 `bertmodel/bert-base-chinese/`。
 
-```bash
-swanlab login
-```
-
-**​**
 
 检查数据读取：
 
@@ -174,7 +170,7 @@ python train.py \
 
 三组 Dev Loss 都在较早阶段达到最低点，随后随着训练继续而上升。`2e-5`、`3e-5`、`5e-5` 的最低 Dev Loss 分别为 0.6139、0.6396 和 0.6944；`5e-5` 后期上升最明显，说明它更容易快速过拟合。Dev Macro-F1 方面，`2e-5` 在第 7 轮取得最高值 **0.8244**，优于 `3e-5` 的 0.8161 和 `5e-5` 的 0.8136。
 
-按照本项目预先确定的“以最佳 Dev Macro-F1 选择超参数”原则，本次学习率实验应选择 `2e-5`。`3e-5` 的 Test Accuracy 和 Test Macro-F1 虽然最高，但**测试集只用于最终评价，不能据此反向选择学习率**。验证集排序与测试集排序不一致，也说明单次、单随机种子实验存在波动；三组差距应通过多个随机种子重复实验进一步确认。
+按照预先确定的“以最佳 Dev Macro-F1 选择超参数”原则，本次学习率实验应选择 `2e-5`。`3e-5` 的 Test Accuracy 和 Test Macro-F1 虽然最高，但**测试集只用于最终评价，不能据此反向选择学习率**。验证集排序与测试集排序不一致，也说明单次、单随机种子实验存在波动；三组差距应通过多个随机种子重复实验进一步确认。
 
 ### 5.3 Batch Size 对比
 
@@ -203,7 +199,7 @@ python train.py \
 
 **测试集结果不能直接用于选择 Dropout，最终设置仍应由各组的最佳 Dev Macro-F1 决定。**
 
-### 5.5 结论与后续实验
+### 5.5 结论
 
 * 各组训练损失最终都接近 0，而验证损失在早期下降后持续回升，模型存在明显过拟合；**保留早停机制是必要的**。
 * 按最佳 Dev Macro-F1，**2e-5 是当前三档学习率中的首选**；按描述性测试结果，`3e-5` 运行取得最高 **Test Accuracy 0.8393** 和 **Test Macro-F1 0.8214**。
