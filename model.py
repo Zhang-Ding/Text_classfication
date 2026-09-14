@@ -5,7 +5,7 @@ from transformers import BertModel
 import config
 
 class BertTextClassifier(nn.Module):
-    def __init__(self,model_path:str,num_labels:int,dropout:float):
+    def __init__(self,model_path,num_labels,dropout):
         super().__init__()
         self.bert = BertModel.from_pretrained(model_path)
         hidden_size = self.bert.config.hidden_size
@@ -17,7 +17,7 @@ class BertTextClassifier(nn.Module):
         )
 
 
-    def forward(self,input_ids:torch.Tensor,attention_mask:torch.Tensor)->torch.Tensor:
+    def forward(self,input_ids,attention_mask):
         outputs = self.bert(
             input_ids = input_ids,
             attention_mask = attention_mask,

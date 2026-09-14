@@ -1,7 +1,7 @@
-from typing import Iterable,Optional,Sequence
+from typing import Iterable
 
 class ClassificationMetrics:
-    def __init__(self,num_classes:int,class_names:Optional[Sequence[str]]=None):
+    def __init__(self,num_classes,class_names=None):
         if num_classes<=0:
             raise ValueError("num_classes必须大于0")
         self.num_classes = num_classes
@@ -122,7 +122,7 @@ class ClassificationMetrics:
             "total_samples": total_samples,
         }
 
-    def report(self, digits: int = 4) -> str:
+    def report(self, digits = 4):
         result = self.compute()
 
         lines = []

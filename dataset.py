@@ -4,7 +4,7 @@ from transformers import BertTokenizer,DataCollatorWithPadding
 from config import LABEL2ID,TrainingConfig
 
 #加载原始数据
-def load_raw_data(filepath: str) -> List[Tuple[str, int]]:
+def load_raw_data(filepath) -> List[Tuple[str, int]]:
     samples = []
     skipped = 0
 
@@ -58,15 +58,15 @@ def load_raw_data(filepath: str) -> List[Tuple[str, int]]:
 
 #dataset类
 class TextClassificationDataset(Dataset):
-    def __init__(self,samples:List[Tuple[str,int]],tokenizer:BertTokenizer,max_length:int):
+    def __init__(self,samples,tokenizer,max_length):
         self.samples = samples
         self.tokenizer = tokenizer
         self.max_length = max_length
 
-    def __len__(self)->int:
+    def __len__(self):
         return len(self.samples)
 
-    def __getitem__(self,index:int)->dict:
+    def __getitem__(self,index):
         text, label_id = self.samples[index]
 
         encoding = self.tokenizer(
@@ -82,7 +82,7 @@ class TextClassificationDataset(Dataset):
             "labels" : label_id,
         }
 
-def build_dataloader(filepath:str,tokenizer:BertTokenizer,max_length:int,batch_size:int,shuffle:bool,num_workers:int)->DataLoader:
+def build_dataloader(filepath,tokenizer,max_length,batch_size,shuffle,num_workers):
     samples = load_raw_data(filepath)
 
     dataset = TextClassificationDataset(
@@ -106,7 +106,7 @@ def build_dataloader(filepath:str,tokenizer:BertTokenizer,max_length:int,batch_s
 
     return dataloader
 
-def build_dataloaders(tokenizer: BertTokenizer,params:TrainingConfig)->Tuple[DataLoader,DataLoader,DataLoader]:
+def build_dataloaders(tokenizer,params:TrainingConfig):
     common_arguments = {
         "tokenizer": tokenizer,
         "batch_size": params.batch_size,
@@ -137,9 +137,7 @@ def build_dataloaders(tokenizer: BertTokenizer,params:TrainingConfig)->Tuple[Dat
 if __name__ == "__main__":
     params = TrainingConfig()
 
-    tokenizer = BertTokenizer.from_pretrained(
-        params.model_path
-    )
+    tokenizer = BertTokenizer.from_pretrained(params.model_path)
 
     train_loader, dev_loader, test_loader = (
         build_dataloaders(

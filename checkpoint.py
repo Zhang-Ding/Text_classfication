@@ -1,17 +1,12 @@
 import os
 import random
-from typing import Optional
-
 import torch
-import torch.nn as nn
-from torch.optim import Optimizer
-from torch.optim.lr_scheduler import LRScheduler
 
 
 CHECKPOINT_VERSION = 1
 
 
-def get_random_state() -> dict:
+def get_random_state():
     random_state = {
         "python": random.getstate(),
         "torch": torch.get_rng_state(),
@@ -24,7 +19,7 @@ def get_random_state() -> dict:
     return random_state
 
 
-def restore_random_state(random_state: Optional[dict]) -> None:
+def restore_random_state(random_state):
     if not random_state:
         return
 
@@ -42,10 +37,8 @@ def restore_random_state(random_state: Optional[dict]) -> None:
         torch.cuda.set_rng_state_all(cuda_state)
 
 
-def get_model_metadata(model: nn.Module) -> dict:
-    metadata = {
-        "model_class": model.__class__.__name__,
-    }
+def get_model_metadata(model):
+    metadata = {"model_class": model.__class__.__name__}
 
     if hasattr(model, "bert"):
         bert = model.bert
@@ -56,18 +49,7 @@ def get_model_metadata(model: nn.Module) -> dict:
     return metadata
 
 
-def save_checkpoint(
-    filepath: str,
-    model: nn.Module,
-    optimizer: Optimizer,
-    scheduler: Optional[LRScheduler],
-    epoch: int,
-    global_step: int,
-    best_dev_macro_f1: float,
-    train_config: dict,
-    dev_metrics: dict,
-    early_stopping_counter: int,
-) -> None:
+def save_checkpoint(filepath,model,optimizer,scheduler,epoch,global_step,best_dev_macro_f1,train_config,dev_metrics,early_stopping_counter) -> None:
     checkpoint = {
         "checkpoint_version": CHECKPOINT_VERSION,
         "epoch": epoch,
@@ -98,14 +80,7 @@ def save_checkpoint(
     os.replace(temporary_filepath, filepath)
 
 
-def load_checkpoint(
-    filepath: str,
-    model: nn.Module,
-    optimizer: Optional[Optimizer] = None,
-    scheduler: Optional[LRScheduler] = None,
-    device: str = "cpu",
-    restore_rng: bool = True,
-) -> dict:
+def load_checkpoint(filepath,model,optimizer = None,scheduler = None,device = "cpu",restore_rng = True):
     if not os.path.isfile(filepath):
         raise FileNotFoundError(
             f"checkpoint 不存在：{filepath}"
