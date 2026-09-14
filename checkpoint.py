@@ -2,7 +2,7 @@ import os
 import random
 import torch
 
-
+# 当前代码使用的 checkpoint 文件格式版本
 CHECKPOINT_VERSION = 1
 
 
@@ -90,6 +90,20 @@ def load_checkpoint(filepath,model,optimizer = None,scheduler = None,device = "c
         filepath,
         map_location=device,
         weights_only=False,
+    )
+
+    # 加载模型状态前检查文件格式版本，避免读取不兼容的新版本 checkpoint
+    # 旧 checkpoint 没有该字段时，按版本 0 处理
+    checkpoint_version = checkpoint.get(
+    "checkpoint_version",
+    0,
+    )
+
+    if checkpoint_version > CHECKPOINT_VERSION:
+        raise RuntimeError(
+            "当前代码无法读取该 checkpoint："
+            f"文件版本为 {checkpoint_version}，"
+            f"代码支持的最高版本为 {CHECKPOINT_VERSION}"
     )
 
     model.load_state_dict(
