@@ -1,0 +1,69 @@
+experiment:
+  name: bert-lr3e-05-batch32-dropout0.1-epoch20-seed42
+
+data:
+  data_dir: data
+  train_file: train_3k.txt
+  dev_file: dev_1k.txt
+  test_file: test_1k.txt
+
+model:
+  model_path: bertmodel/bert-base-chinese
+  max_length: 128
+  dropout: 0.1
+
+labels:
+  - code: 100
+    name: news_story
+  - code: 101
+    name: news_culture
+  - code: 102
+    name: news_entertainment
+  - code: 103
+    name: news_sports
+  - code: 104
+    name: news_finance
+  - code: 106
+    name: news_house
+  - code: 107
+    name: news_car
+  - code: 108
+    name: news_edu
+  - code: 109
+    name: news_tech
+  - code: 110
+    name: news_military
+  - code: 112
+    name: news_travel
+  - code: 113
+    name: news_world
+  - code: 114
+    name: stock
+  - code: 115
+    name: news_agriculture
+  - code: 116
+    name: news_game
+
+training:
+  epochs: 20
+  batch_size: 32
+  learning_rate: 3.0e-5
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  seed: 42
+  num_workers: 0
+  log_interval: 20
+  device: auto
+  resume_training: false
+
+early_stopping:
+  patience: 4
+  min_delta: 1.0e-4
+
+output:
+  save_dir: checkpoints
+
+swanlab:
+  enabled: true
+  project: bert-text-classification

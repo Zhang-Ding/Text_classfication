@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 from transformers import BertModel
 
-import config
-
 class BertTextClassifier(nn.Module):
     def __init__(self,model_path,num_labels,dropout):
         super().__init__()
@@ -34,20 +32,25 @@ class BertTextClassifier(nn.Module):
 if __name__ == "__main__":
     from transformers import BertTokenizer
 
+    from arguments import parse_training_config
     from dataset import build_dataloaders
 
+    params = parse_training_config()
     tokenizer = BertTokenizer.from_pretrained(
-        config.MODEL_PATH
+        params.model_path
     )
 
-    train_loader, _, _ = build_dataloaders(tokenizer)
+    train_loader, _, _ = build_dataloaders(
+        tokenizer=tokenizer,
+        params=params,
+    )
 
     batch = next(iter(train_loader))
 
     model = BertTextClassifier(
-        model_path=config.MODEL_PATH,
-        num_labels=config.NUM_LABELS,
-        dropout=config.DROPOUT,
+        model_path=params.model_path,
+        num_labels=params.num_labels,
+        dropout=params.dropout,
     )
 
     model.eval()
@@ -69,5 +72,5 @@ if __name__ == "__main__":
     print("第一条预测编号：", first_prediction)
     print(
         "第一条预测类别：",
-        config.LABEL_NAMES[first_prediction],
+        params.label_names[first_prediction],
     )

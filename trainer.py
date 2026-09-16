@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 
 import torch
 import torch.nn as nn
@@ -7,6 +8,7 @@ from torch.optim import AdamW
 from transformers import BertTokenizer, get_linear_schedule_with_warmup
 
 from checkpoint import load_checkpoint, save_checkpoint
+from config import TrainingConfig
 from dataset import build_dataloaders
 from metrics import ClassificationMetrics
 from model import BertTextClassifier
@@ -18,7 +20,7 @@ except ImportError:
 
 
 class Trainer:
-    def __init__(self, params):
+    def __init__(self, params: TrainingConfig):
         self.params = params
 
         random.seed(params.seed)
@@ -50,13 +52,30 @@ class Trainer:
 
         swanlab.init(
             project=self.params.swanlab_project,
-            experiment_name=(self.params.swanlab_experiment_name),
+            experiment_name=self.params.experiment_name,
             config=self.params.to_dict(),
         )
         self.swanlab_started = True
 
     def _prepare_training(self):
         params = self.params
+
+        self.experiment_dir = os.path.join(
+            params.save_dir,
+            params.experiment_name,
+        )
+        os.makedirs(self.experiment_dir, exist_ok=True)
+
+        self.best_checkpoint_path = os.path.join(
+            self.experiment_dir,
+            "best_model.pt",
+        )
+        self.last_checkpoint_path = os.path.join(
+            self.experiment_dir,
+            "last_checkpoint.pt",
+        )
+        self._save_config_snapshot()
+
         self.tokenizer = BertTokenizer.from_pretrained(params.model_path)
         self.train_loader,self.dev_loader,self.test_loader = build_dataloaders(tokenizer=self.tokenizer,params=params)
 
@@ -81,16 +100,22 @@ class Trainer:
             num_training_steps=self.total_training_steps,
         )
 
-        self.experiment_dir = os.path.join(params.save_dir,params.swanlab_experiment_name)
-        os.makedirs(self.experiment_dir, exist_ok=True)
-        self.best_checkpoint_path = os.path.join(self.experiment_dir,"best_model.pt")
-        self.last_checkpoint_path = os.path.join( self.experiment_dir,"last_checkpoint.pt")
-
         tokenizer_dir = os.path.join(self.experiment_dir,"tokenizer")
         self.tokenizer.save_pretrained(tokenizer_dir)
 
         print("总训练步数：", self.total_training_steps)
         print("Warmup 步数：", self.warmup_steps)
+
+    def _save_config_snapshot(self):
+        source_path = os.path.abspath(self.params.config_path)
+        saved_path = os.path.abspath(
+            os.path.join(self.experiment_dir, "config.yaml")
+        )
+
+        if os.path.normcase(source_path) != os.path.normcase(saved_path):
+            shutil.copy2(source_path, saved_path)
+
+        print("实验配置：", saved_path)
 
     def _resume_if_needed(self):
         if not self.params.resume_training:
