@@ -47,8 +47,10 @@ news_agriculture、news_game
 
 ```text
 textclassfication/
-├── arguments.py             # 命令行参数
-├── config.py                # 路径、标签和默认参数
+├── configs/
+│   └── baseline.yaml        # 基准实验配置
+├── arguments.py             # 解析 --config参数
+├── config.py                # 加载、校验YAML配置
 ├── dataset.py               # 数据读取和 DataLoader
 ├── model.py                 # BERT 分类模型
 ├── metrics.py               # 手写评价指标
@@ -64,68 +66,61 @@ textclassfication/
 
 ## 4. 指令格式与使用方式
 
-安装依赖：
+当前实验使用的核心环境如下：
+软件** | **版本** |
+| --- | --- |
+| Python | `3.10.21` |
+| PyTorch | `2.8.0+cu128` |
+| Transformers | `4.48.3` |
+| SwanLab | `0.10.0` |
+| PyYAML | `6.0.3`
 
-```bash
-pip install torch transformers swanlab
-```
+将 **`bert-base-chinese`** 放到 `bertmodel/bert-base-chinese/`。数据、模型、输出目录和训练超参数统一在configs/baseline.yaml中配置，相对路径会以项目根目录为基准解析。
 
-将 **`bert-base-chinese`** 放到 `bertmodel/bert-base-chinese/`。
-
-
-检查数据读取：
-
-```bash
-python dataset.py
-```
-
-查看所有训练参数：
-
+查看命令说明：
 ```bash
 python train.py --help
 ```
 
-使用默认参数训练：
+检查数据读取：
 
 ```bash
-python train.py
+python dataset.py --config configs/baseline.yaml
 ```
 
-手动指定训练参数：
+使用基准配置训练：
 
 ```bash
-python train.py \
---epochs 10 \
---batch-size 32 \
---learning-rate 3e-5 \
---experiment-name bert-lr3e-05-batch32-epoch10
+python train.py --config configs/baseline.yaml
 ```
-
-常用参数：
-
-| **参数**              | **说明**           | **默认值** |
-| ------------------- | ---------------- | ------- |
-| `--epochs`          | 训练轮数             | 5       |
-| `--batch-size`      | 每个 batch 的样本数    | 32      |
-| `--learning-rate`   | 学习率              | `3e-5`  |
-| `--max-length`      | 最大 token 数       | 128     |
-| `--num-workers`     | DataLoader 工作进程数 | 0       |
-| `--device`          | 训练设备             | `auto`  |
-| `--experiment-name` | SwanLab 实验名称     | 自动生成    |
-| `--resume`          | 从最近检查点继续训练       | 否       |
-| `--disable-swanlab` | 关闭 SwanLab 日志    | 否（默认启用） |
-
-**从检查点继续训练时，必须使用与原实验相同的训练参数：**
-
+进行新实验时，先复制基准配置，再修改新文件中的参数和实验名称：
 ```bash
-python train.py \
---epochs 10 \
---batch-size 32 \
---learning-rate 3e-5 \
---resume
+cp configs/baseline.yaml configs/lr_2e-5.yaml
+python train.py --config configs/lr_2e-5.yaml
 ```
 
-训练过程中始终更新 **`last_checkpoint.pt`**，并按照验证集 **Macro-F1** 保存 **`best_model.pt`**。训练结束后，程序加载最佳模型并在测试集上评价。
+配置文件主要分为以下几部分：
+
+|配置段** | **内容** |
+| --- | --- |
+| `experiment` | 实验名称 |
+| `data` | 数据目录以及训练集、验证集和测试集文件名 |
+| `model` | 预训练模型路径、最大长度和 Dropout |
+| `labels` | 原始标签编号与类别名称 |
+| `training` | Epoch、Batch Size、学习率、随机种子等 |
+| `early_stopping` | 早停等待轮数和最小提升值 |
+| `output` | checkpoint 保存目录 |
+| `swanlab` | SwanLab 开关和项目名称
+
+从检查点继续训练时，保持 `experiment.name` 不变，并将配置中的
+`training.resume_training` 改为 `true`：
+```bash
+python train.py --config configs/baseline.yaml
+```
+每次运行都会将实际传入的 YAML 保存为
+`checkpoints/实验名称/config.yaml`。训练过程中始终更新
+**`last_checkpoint.pt`**，并按照验证集 **Macro-F1** 保存
+**`best_model.pt`**。训练结束后，程序加载最佳模型并在测试集上评价。
 
 ## 5. 实验分析
 
